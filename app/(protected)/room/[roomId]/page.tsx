@@ -1,3 +1,5 @@
+import { SocketProvider } from "@/components/provider/socket-provider";
+import RoomContainer from "@/components/room-container";
 import { useServerUser } from "@/hooks/use-server-user";
 import { db } from "@/lib/db";
 import { ROUTE_HOME_PAGE } from "@/routes";
@@ -20,7 +22,11 @@ const RoomPage = async ({ params }: { params: { roomId: string } }) => {
     },
   });
   console.log({ room });
-  return <div>RoomPage</div>;
+  return (
+    <SocketProvider>
+      <RoomContainer />
+    </SocketProvider>
+  );
 };
 
 export default RoomPage;

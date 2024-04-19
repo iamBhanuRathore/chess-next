@@ -3,22 +3,24 @@ import { createRoom } from "@/actions/chess/create-room";
 import { Button } from "@/components/ui/button";
 import { ROUTE_ROOM_PAGE } from "@/routes";
 import Image from "next/image";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 const HomePage = () => {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
   const handleCreateRoom = async () => {
     try {
       const { error, room } = await createRoom("hola");
       if (error) {
       }
       if (room?.id) {
-        redirect(`${ROUTE_ROOM_PAGE}?${room.id}`);
+        const url = `${ROUTE_ROOM_PAGE}/${room.id}`;
+        router.push(url);
       }
       console.log({ error, room });
     } catch (error) {
-      console.log("Some Error Occured");
+      console.log("Some Error Occured", error);
     }
   };
   return (
