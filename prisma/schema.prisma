@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model User {
+  id                    String                 @id @default(cuid())
+  name                  String?
+  email                 String?                @unique
+  emailVerified         DateTime?
+  image                 String?
+  role                  UserRole               @default(USER)
+  password              String?
+  isTwoFactorEnabled    Boolean                @default(false)
+  accounts              Account[]
+  TwoFactorConfirmation TwoFactorConfirmation?
+  VerificationToken     VerificationToken[]
+  ChessRoom             ChessRoom[]
+  Player                Player[]
+  Spectator             Spectator[]
+}
+
+enum TokenType {
+  VERIFICATION
+  RESETPASSWORD
+  TWOFACTOR
+}
+
+model VerificationToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  email     String
+  token     String
+  expire    DateTime
+  tokenType TokenType
+
+  @@unique([email, tokenType])
+  @@unique([token, tokenType])
+}
+
+model TwoFactorConfirmation {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
+}
+
+model Spectator {
+  id     String    @id @default(cuid())
+  user   User      @relation(fields: [userId], references: [id])
+  userId String
+  room   ChessRoom @relation(fields: [roomId], references: [id])
+  roomId String
+}
+
+enum GameResult {
+  RESIGNED
+  CHECKMATE
+  STALEMATE
+  DRAW
+}
+
+model ChessRoom {
+  id          String      @id @default(cuid())
+  name        String
+  createdBy   User        @relation(fields: [createdById], references: [id])
+  createdById String
+  players     Player[]
+  Move        Move[]
+  spectators  Spectator[]
+  isGameEnded Boolean     @default(false) // Boolean field to indicate if the game has ended
+  gameResult  GameResult? // Enum field to indicate how the game ended
+}
+
+enum COLOR {
+  BLACK
+  WHITE
+}
+
+model Player {
+  id              String    @id @default(cuid())
+  user            User      @relation(fields: [userId], references: [id])
+  userId          String
+  room            ChessRoom @relation(fields: [roomId], references: [id])
+  roomId          String
+  color           COLOR // You can use an enum for 'color' if you prefer
+  isCurrentPlayer Boolean   @default(false)
+  moves           Move[] // Relation to moves made by this player
+}
+
+model Move {
+  id            String    @id @default(cuid())
+  player        Player    @relation(fields: [playerId], references: [id])
+  playerId      String
+  room          ChessRoom @relation(fields: [roomId], references: [id])
+  roomId        String
+  moveText      String
+  moveNumber    Int
+  moveTimestamp DateTime  @default(now())
+}
